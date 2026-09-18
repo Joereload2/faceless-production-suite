@@ -1,40 +1,39 @@
 # Arquitectura
 
-Fuentes:
+Leer junto a [`../plan/01-decisiones-cerradas.md`](../plan/01-decisiones-cerradas.md) y [`decision-v1.md`](./decision-v1.md).
 
-- `02-diseno-tecnico-codigo-y-stack.md` — stack y topologia
-- `03-tres-propuestas-arquitectura.md` — A local / B cloud / C hibrido
-
-## Topologia v1 (propuesta A + contrato de C)
+## Topologia v1 (A + contrato de C)
 
 ```
-[Chrome extension] --JSON--> [Dashboard Vite+React+Hono+SQLite]
+[Chrome extension] --JSON--> [Dashboard Vite+React + API Hono+SQLite]
                                     |
                      +--------------+--------------+
                      |              |              |
-              worker GPU      worker CPU      stock/GSC TS
-              Comfy image     Piper/Whisper   Pexels/Unsplash
+              worker GPU      worker CPU      stock/GSC
+              Comfy image     Piper/Whisper   Pexels
               Comfy video     ffmpeg
+              127.0.0.1       127.0.0.1       127.0.0.1
 ```
 
-- Un consumer GPU. Claim de fila SQL, no dos procesos a la vez.
-- Workers en localhost. Dashboard es la unica puerta (Tailscale).
-- Job: ver `packages/schema/job.ts`.
+- Un consumer GPU. Claim SQL atomico.
+- Dashboard unica puerta. Bind loopback. Remoto = Tailscale.
+- Job: `packages/schema/job.ts`.
 
 ## Stack
 
 | Capa | Eleccion |
 |---|---|
-| Dashboard + API | TypeScript, Vite, React, Hono, Drizzle, SQLite |
-| Extension | MV3, Vite CRXJS, IndexedDB |
+| Workspace | pnpm + TS 5 strict + Biome + Vitest |
+| Dashboard + API | Vite, React 18, Hono, Drizzle, SQLite, Zod |
+| Extension | MV3, Vite CRXJS |
 | Imagen / video | Python FastAPI + ComfyUI |
-| Voz | Piper v1 + ffmpeg loudnorm -14 LUFS |
-| Stock | Pexels + Unsplash APIs |
-| Subtitulos | faster-whisper |
+| Voz | Piper + ffmpeg loudnorm -14 LUFS |
+| Stock | Pexels (+ Unsplash despues) |
+| Subtitulos | faster-whisper small |
 | Ensamblador | spec JSON + ffmpeg por segmentos |
-| Thumb final | Sharp + SVG (el modelo no escribe letras) |
-| SEO | cron + GSC API + Claude; autoPublish false |
+| Thumb | Sharp + SVG |
+| SEO | cron + GSC + Claude; autoPublish false |
 
 ## Lo que no usamos en v1
 
-Streamlit/Gradio como producto, Electron, K8s, LangGraph, scrape 24/7 de YouTube, texto del thumb generado por el modelo de imagen.
+Streamlit/Gradio como producto, Electron, K8s, LangGraph, scrape 24/7 de YouTube, texto del thumb generado por el modelo, Next, Postgres, n8n.

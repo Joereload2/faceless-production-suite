@@ -1,12 +1,24 @@
 # Producto
 
-Fuentes originales de la suite faceless.
+El detalle de caracteristicas y el orden de entrega viven en el plan:
 
-- [01 — Caracteristicas, apps y flujo](./01-caracteristicas-apps-y-flujo-faceless.md)
-- Ver tambien `docs/arquitectura/` y `docs/review/REVIEW.md`.
+- Flujo y puertas: [`../plan/01-decisiones-cerradas.md`](../plan/01-decisiones-cerradas.md)
+- Etapas y done: [`../plan/02-roadmap-etapas.md`](../plan/02-roadmap-etapas.md)
+- Area PM: [`../areas/producto.md`](../areas/producto.md)
 
-Los tres documentos de origen viven junto a este indice:
+Los documentos de origen 01 / 02 / 03 **no forman parte de este repo**. Este plan los sustituye. No se vuelven a enlazar.
 
-1. Caracteristicas y flujo (extension outliers, SEO, dashboard, imagen, voz, stock, video corto).
-2. Diseno tecnico y stack (monorepo TS + workers Python + Comfy + Piper + ffmpeg).
-3. Tres propuestas A / B / C.
+## Flujo (v1)
+
+```
+IDEA        → Extension outliers + (opcional) SEO / GSC
+GUION       → Claude + skill de tono     [PUERTA 1]
+VOZ         → Piper
+VISUALES    → Stock + Imagen
+MONTAJE     → ffmpeg por segmentos
+EMPAQUE     → Sharp/SVG + ficha          [PUERTA 2]
+PUBLI       → humano
+APRENDIZAJE → Studio → outliers / SEO
+```
+
+Meta de producto v1: un `export/master_16x9.mp4` reproducible en el estudio local.
