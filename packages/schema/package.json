@@ -1,0 +1,15 @@
+{
+  "name": "@faceless/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./job.ts",
+  "types": "./job.ts",
+  "exports": {
+    ".": "./job.ts",
+    "./inputs": "./inputs.ts"
+  },
+  "scripts": {
+    "test": "echo \"vitest se cablea en E1; ver job.test.ts\""
+  }
+}
