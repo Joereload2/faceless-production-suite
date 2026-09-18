@@ -8,12 +8,10 @@ Repo: https://github.com/Joereload2/faceless-production-suite
 
 | Ruta | Que es |
 |---|---|
-| `docs/producto/01-caracteristicas-apps-y-flujo-faceless.md` | Que hace cada app, contratos JSON, flujo long + Short |
-| `docs/arquitectura/02-diseno-tecnico-codigo-y-stack.md` | Stack, monorepo, workers, Compose de referencia |
-| `docs/arquitectura/03-tres-propuestas-arquitectura.md` | Propuestas A (local), B (cloud plantilla), C (hibrido) |
+| `docs/producto/` | Caracteristicas, apps y flujo |
+| `docs/arquitectura/` | Stack, topologia y decision v1 |
 | `docs/review/REVIEW.md` | Review de performance, estabilidad y calidad |
-| `packages/schema/job.ts` | Contrato Job propuesto (timeouts, idempotencia, engines) |
-| `skills/project-reviewer/` | Skill de Grok usado para el review |
+| `packages/schema/job.ts` | Contrato Job (timeouts, idempotencia, engines) |
 
 ## Principio
 
