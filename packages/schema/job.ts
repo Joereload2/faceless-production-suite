@@ -1,9 +1,6 @@
 /**
- * Shared Job contract for the faceless studio.
- * UI, extension, workers, and (later) cloud speak this shape only.
- *
- * Numbers live here. Docs in docs/plan/03-contratos-datos-variables.md
- * must match. If they drift, fix both in the same PR.
+ * Shared Job contract. Numbers live HERE only.
+ * Generate contract.json via `pnpm --filter @faceless/schema build:contract`.
  */
 
 export type Module =
@@ -13,7 +10,9 @@ export type Module =
   | "video"
   | "seo"
   | "captions"
-  | "assemble";
+  | "assemble"
+  | "script"
+  | "thumb";
 
 export type JobStatus =
   | "queued"
@@ -34,6 +33,8 @@ export type ErrorCode =
   | "canceled"
   | "internal"
   | "idempotency_conflict";
+
+export type CreatedBy = "api" | "extension" | "worker-cpu" | "worker-gpu" | string;
 
 export interface JobFile {
   kind: string;
@@ -59,7 +60,10 @@ export interface Job {
   progress: number;
   timeoutSec: number;
   idempotencyKey: string;
-  owner: string;
+  createdBy: CreatedBy;
+  claimedBy?: string;
+  inputHash: string;
+  cancelRequested: boolean;
   input: Record<string, unknown>;
   output?: {
     files: JobFile[];
@@ -71,8 +75,11 @@ export interface Job {
   cost?: JobCost;
   createdAt: string;
   updatedAt: string;
-  claimedUntil?: string;
+  leaseUntil?: string;
+  deadlineAt?: string;
 }
+
+export const GPU_MODULES: readonly Module[] = ["image", "video"];
 
 export const MODULE_TIMEOUT_SEC: Record<Module, number> = {
   image: 180,
@@ -82,6 +89,8 @@ export const MODULE_TIMEOUT_SEC: Record<Module, number> = {
   stock: 60,
   seo: 180,
   assemble: 600,
+  script: 180,
+  thumb: 60,
 };
 
 export const LIMITS = {
@@ -92,25 +101,71 @@ export const LIMITS = {
   POLL_MS: 1500,
   STOCK_CACHE_TTL_SEC: 24 * 60 * 60,
   HEARTBEAT_MS: 10_000,
-  CLAIM_GRACE_MS: 15_000,
+  LEASE_MS: 30_000,
+  SWEEP_MS: 12_000,
+  SQLITE_BUSY_TIMEOUT_MS: 5000,
   LUFS_TARGET: -14,
   SEGMENT_SEC_MIN: 15,
   SEGMENT_SEC_MAX: 30,
 } as const;
 
-export const CLAIM_SQL =
-  "UPDATE jobs SET status = 'running', owner = ?, updated_at = ?, claimed_until = ? WHERE id = ? AND status = 'queued'";
+export const SQLITE_PRAGMAS = [
+  "PRAGMA journal_mode = WAL",
+  "PRAGMA busy_timeout = 5000",
+  "PRAGMA foreign_keys = ON",
+] as const;
 
-export const HEARTBEAT_SQL =
-  "UPDATE jobs SET updated_at = ?, claimed_until = ? WHERE id = ? AND status = 'running' AND owner = ?";
+export const CLAIM_BY_ID_SQL = `UPDATE jobs
+   SET status = 'running',
+       claimed_by = ?,
+       updated_at = ?,
+       lease_until = ?,
+       deadline_at = ?
+ WHERE id = ? AND status = 'queued'
+RETURNING *`;
 
-export const RECONCILE_SQL =
-  "UPDATE jobs SET status = 'error', error_code = 'stale', error = 'heartbeat expired', updated_at = ? WHERE status = 'running' AND claimed_until < ?";
+/** Worker loop: pick oldest queued job for the given modules (expand IN list in the caller). */
+export const CLAIM_SQL = CLAIM_BY_ID_SQL;
+
+export const HEARTBEAT_SQL = `UPDATE jobs
+   SET updated_at = :now, lease_until = :lease_until
+ WHERE id = :id AND status = 'running' AND claimed_by = :owner
+RETURNING cancel_requested`;
+
+export const SWEEP_STALE_SQL = `UPDATE jobs
+   SET status = 'error', error_code = 'stale',
+       error = 'lease expired', updated_at = :now
+ WHERE status = 'running' AND lease_until < :now`;
+
+export const SWEEP_TIMEOUT_SQL = `UPDATE jobs
+   SET status = 'error', error_code = 'timeout',
+       error = 'deadline exceeded', updated_at = :now
+ WHERE status = 'running' AND deadline_at < :now`;
+
+/** @deprecated use SWEEP_STALE_SQL; kept as alias for boot reconcile */
+export const RECONCILE_SQL = SWEEP_STALE_SQL;
+
+export const GPU_ONE_RUNNING_SQL = `CREATE UNIQUE INDEX IF NOT EXISTS one_gpu_running
+  ON jobs(status)
+  WHERE status = 'running' AND module IN ('image', 'video')`;
 
 export function defaultTimeout(module: Module): number {
   return MODULE_TIMEOUT_SEC[module];
 }
 
+export function utcIso(ms: number = Date.now()): string {
+  return new Date(ms).toISOString();
+}
+
+export function leaseUntilIso(nowMs: number): string {
+  return new Date(nowMs + LIMITS.LEASE_MS).toISOString();
+}
+
+export function deadlineAtIso(nowMs: number, timeoutSec: number): string {
+  return new Date(nowMs + timeoutSec * 1000).toISOString();
+}
+
+/** @deprecated lease is independent of timeout; use leaseUntilIso */
 export function claimedUntilIso(nowMs: number, timeoutSec: number): string {
-  return new Date(nowMs + timeoutSec * 1000 + LIMITS.CLAIM_GRACE_MS).toISOString();
+  return deadlineAtIso(nowMs, timeoutSec);
 }

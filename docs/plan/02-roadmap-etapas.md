@@ -8,14 +8,19 @@ Duraciones son orden de magnitud para **una persona** que ya conoce el stack. No
 ## Vista
 
 ```
-E0 verdad  → E1 cola → E2 UI → E3 voz → E4 stock
+E0 verdad → E0b spike CLI mp4 fixture
+         → E1 cola → E2 UI → E3 voz → E3b guion+shotlist
                                   ↓
-                     E5 outliers  E6 imagen
+                     E5 outliers  E4 stock  E6 imagen
                                   ↓
-                              E7 montaje = primer MP4   ← meta v1
+                              E7 montaje = primer MP4 real
+                                  ↓
+                              E7b empaque (thumb + ficha)
                                   ↓
                      E8 SEO   E9 video corto   E10 publish
 ```
+
+No recortar **E0b** ni **E3b**. El spike de ffmpeg va **antes o junto** a E1 (riesgo primero).
 
 ## E0 — Verdad del repo (esta entrega)
 
@@ -32,7 +37,15 @@ E0 verdad  → E1 cola → E2 UI → E3 voz → E4 stock
 
 **Cierre.** README apunta aqui. `job.ts` exporta `LIMITS`, timeouts, `CLAIM_SQL`. Un extraño puede explicar A vs C en 5 lineas.
 
-**Pruebas.** Revision humana. No hay CI todavia.
+**Pruebas.** Revision humana. CI de contrato (`pnpm -r test`).
+
+## E0b — Spike CLI: primer mp4 fixture (nuevo)
+
+**Meta.** Un `master_16x9.mp4` de fixture **sin cola**: guion txt → Piper → wav → stock/imagen fixture → ffmpeg por segmentos.
+
+**Cierre.** El mp4 se ve/oye; se miden tiempos reales en el hardware (calibrar timeouts). El spike se tira o se convierte en worker E7.
+
+**No recortar.**
 
 ## E1 — Cola y API dummy
 
@@ -113,6 +126,12 @@ E0 verdad  → E1 cola → E2 UI → E3 voz → E4 stock
 | E3-S1 | smoke | un job tts real en maquina de dev (manual, no CI) |
 
 CI **no** corre Piper. CI corre el fake.
+
+## E3b — Guion + shot list (nuevo)
+
+**Meta.** Modulo `script` (Claude + tono versionado) produce `script.json` + `shotlist.json`. Puerta 1 sobre este artefacto, con checklist de originalidad.
+
+**Cierre.** Job `script` idempotente; el humano aprueba el artefacto, no un booleano suelto.
 
 ## E4 — Stock
 
@@ -202,6 +221,12 @@ CI **no** corre Piper. CI corre el fake.
 **No incluye.** Editor visual tipo CapCut. Publish.
 
 **Cierre.** Fixture de 30–60 s monta. Se puede reproducir el master.
+
+## E7b — Empaque: thumb + ficha (nuevo)
+
+**Meta.** Modulo `thumb` (Sharp + SVG) y ficha YouTube (titulo, descripcion, tags). Puerta 2 sobre master + thumb ligados al artefacto (hash/job id), no a un booleano suelto.
+
+**No recortar.**
 
 **Pruebas**
 

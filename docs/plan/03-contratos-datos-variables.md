@@ -50,7 +50,10 @@ CREATE TABLE jobs (
   progress         REAL NOT NULL DEFAULT 0,
   timeout_sec      INTEGER NOT NULL,
   idempotency_key  TEXT NOT NULL,
-  owner            TEXT NOT NULL,
+  created_by       TEXT NOT NULL,
+  claimed_by       TEXT,
+  input_hash       TEXT NOT NULL,
+  cancel_requested INTEGER NOT NULL DEFAULT 0,
   input_json       TEXT NOT NULL,
   output_json      TEXT,
   error            TEXT,
@@ -63,11 +66,15 @@ CREATE TABLE jobs (
   stock_calls      INTEGER,
   created_at       TEXT NOT NULL,
   updated_at       TEXT NOT NULL,
-  claimed_until    TEXT
+  lease_until      TEXT,
+  deadline_at      TEXT
 );
 
 CREATE UNIQUE INDEX jobs_idempotency ON jobs(project_id, idempotency_key);
 CREATE INDEX jobs_status ON jobs(status, updated_at);
+CREATE UNIQUE INDEX one_gpu_running
+  ON jobs(status)
+  WHERE status = 'running' AND module IN ('image', 'video');
 ```
 
 Mapeo TS ↔ SQL: camelCase en TypeScript, snake_case en SQL. Drizzle es el unico lugar que traduce. Nadie escribe `updatedAt` en SQL crudo salvo las constantes de `packages/schema`.
@@ -80,11 +87,16 @@ Reglas:
 
 - `id` = ulid.
 - `idempotencyKey` = string no vacio. Lo genera la UI o el caller. El server no lo reescribe.
-- `owner` = obligatorio en create (`api` | `worker-cpu` | `worker-gpu` | `extension` | hostname).
+- `created_by` = quien creo el job (`api` | `extension` | hostname).
+- `claimed_by` = worker que tiene el lease.
+- `lease_until` = corto (~30 s), lo renueva el heartbeat. No es el timeout del modulo.
+- `deadline_at` = `now + timeout_sec` al claim; **no** se renueva.
+- `cancel_requested` = flag cooperativo.
+- `input_hash` = SHA-256 del JSON canonico del input.
 - `engine` = `local` en v1. `cloud` rechazado si `CLOUD_JOBS` != `1`.
 - `progress` = 0..1.
 - `input` se valida con Zod **por modulo** antes de persistir.
-- `error` es mensaje seguro para humanos. `errorCode` es maquina: `timeout` | `stale` | `budget` | `validation` | `io` | `config` | `canceled` | `internal`.
+- `error` es mensaje seguro para humanos. `errorCode` es maquina: `timeout` | `stale` | `budget` | `validation` | `io` | `config` | `canceled` | `internal` | `idempotency_conflict`.
 
 ## Modulos
 
@@ -95,27 +107,26 @@ Reglas:
 | `image` | worker-gpu | `{ prompt, variants 1..4, preset: image-v1 }` | png |
 | `video` | worker-gpu | `{ prompt, seconds, preset: video-v1 }` | mp4 corto |
 | `captions` | worker-cpu | `{ audioJobId }` | `captions.srt` |
-| `assemble` | worker-cpu | `{ spec: AssembleSpec }` | `export/master_16x9.mp4` |
+| `assemble` | worker-cpu | `{ spec: AssembleSpec }` con `fileName`, `timelineStartSec`/`timelineEndSec`; audio mezclado una vez al final | `export/master_16x9.mp4` |
 | `seo` | worker-cpu / cron | `{ siteUrl, days }` | tabla huecos en output.meta |
+| `script` | worker-cpu | tono + brief | `script.json` + `shotlist.json` |
+| `thumb` | worker-cpu | master/job ids | `export/thumb.png` + ficha YT |
 
-Fuera del Job (tablas propias, no module inventado): outliers, script, thumb, publish.
+Modulos extra v1 (tras el analisis 18-sep): `script` (guion + shot list, puerta 1), `thumb` (empaque, puerta 2). Outliers y publish siguen fuera del Job (tablas / flujo humano).
 
-## SQL de claim y reconcile
+## SQL de claim, heartbeat y sweeper
 
-```sql
-UPDATE jobs
-   SET status = 'running', owner = ?, updated_at = ?, claimed_until = ?
- WHERE id = ? AND status = 'queued';
+Fuente: `packages/schema/job.ts` (`CLAIM_BY_ID_SQL`, `HEARTBEAT_SQL`, `SWEEP_*`).
 
-UPDATE jobs SET updated_at = ?, claimed_until = ?
- WHERE id = ? AND status = 'running' AND owner = ?;
+Claim por id (CAS). El worker de cola usa el mismo CAS sobre el `id` mas viejo `queued` del modulo. Comprobar fila `RETURNING`.
 
-UPDATE jobs
-   SET status = 'error', error_code = 'stale', error = 'heartbeat expired', updated_at = ?
- WHERE status = 'running' AND claimed_until < ?;
-```
+Heartbeat renueva **solo** `lease_until` (~30 s) y devuelve `cancel_requested`. No toca `deadline_at`.
 
-El helper de claim **debe** comprobar `changes() === 1`. Si no, no se trabaja.
+Sweeper periodico (`SWEEP_MS`, proceso API): `lease_until < now` → `stale`; `deadline_at < now` → `timeout`. El reconcile de boot es el mismo sweep.
+
+PRAGMAs: WAL, `busy_timeout=5000`, `foreign_keys=ON`. Escrituras de claim/heartbeat: `BEGIN IMMEDIATE`.
+
+Timestamps: siempre `toISOString()` UTC con `Z`.
 
 ## Variables de entorno
 

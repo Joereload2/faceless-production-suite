@@ -7,9 +7,17 @@
   "types": "./job.ts",
   "exports": {
     ".": "./job.ts",
-    "./inputs": "./inputs.ts"
+    "./inputs": "./inputs.ts",
+    "./contract.json": "./contract.json"
   },
   "scripts": {
-    "test": "echo \"vitest se cablea en E1; ver job.test.ts\""
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 job.ts inputs.ts export-contract.ts",
+    "build:contract": "npx --yes tsx export-contract.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
   }
 }

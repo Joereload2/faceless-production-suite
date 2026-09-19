@@ -6,13 +6,26 @@ __pycache__/
 dist/
 build/
 outputs/
-data/*.sqlite
-data/*.sqlite-journal
+.DS_Store
+*.log
+comfy-models/
 *.onnx
 *.safetensors
 *.ckpt
-.DS_Store
+
+# Studio data (bytes + sqlite). Keep the folder.
+data/*
+!data/.gitkeep
+
+# Secrets
 .env
-.env.local
-*.log
-comfy-models/
+.env.*
+!.env.example
+
+# SQLite WAL
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+package-lock.json

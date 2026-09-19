@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "modules": {
+    "image": 180,
+    "video": 900,
+    "tts": 120,
+    "captions": 300,
+    "stock": 60,
+    "seo": 180,
+    "assemble": 600,
+    "script": 180,
+    "thumb": 60
+  },
+  "gpuModules": [
+    "image",
+    "video"
+  ],
+  "limits": {
+    "maxQueuedGpu": 3,
+    "maxProjectBytes": 21474836480,
+    "softProjectBytes": 5368709120,
+    "maxImageVariants": 4,
+    "POLL_MS": 1500,
+    "STOCK_CACHE_TTL_SEC": 86400,
+    "HEARTBEAT_MS": 10000,
+    "LEASE_MS": 30000,
+    "SWEEP_MS": 12000,
+    "SQLITE_BUSY_TIMEOUT_MS": 5000,
+    "LUFS_TARGET": -14,
+    "SEGMENT_SEC_MIN": 15,
+    "SEGMENT_SEC_MAX": 30
+  },
+  "errorCodes": [
+    "timeout",
+    "stale",
+    "budget",
+    "validation",
+    "io",
+    "config",
+    "canceled",
+    "internal",
+    "idempotency_conflict"
+  ],
+  "pragmas": [
+    "PRAGMA journal_mode = WAL",
+    "PRAGMA busy_timeout = 5000",
+    "PRAGMA foreign_keys = ON"
+  ],
+  "sql": {
+    "claimById": "UPDATE jobs\n   SET status = 'running',\n       claimed_by = ?,\n       updated_at = ?,\n       lease_until = ?,\n       deadline_at = ?\n WHERE id = ? AND status = 'queued'\nRETURNING *",
+    "heartbeat": "UPDATE jobs\n   SET updated_at = :now, lease_until = :lease_until\n WHERE id = :id AND status = 'running' AND claimed_by = :owner\nRETURNING cancel_requested",
+    "sweepStale": "UPDATE jobs\n   SET status = 'error', error_code = 'stale',\n       error = 'lease expired', updated_at = :now\n WHERE status = 'running' AND lease_until < :now",
+    "sweepTimeout": "UPDATE jobs\n   SET status = 'error', error_code = 'timeout',\n       error = 'deadline exceeded', updated_at = :now\n WHERE status = 'running' AND deadline_at < :now",
+    "oneGpuRunning": "CREATE UNIQUE INDEX IF NOT EXISTS one_gpu_running\n  ON jobs(status)\n  WHERE status = 'running' AND module IN ('image', 'video')"
+  }
+}

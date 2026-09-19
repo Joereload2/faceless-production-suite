@@ -4,6 +4,8 @@ Este repo es la **fuente de verdad** del estudio faceless: producto, arquitectur
 
 Todavia no hay workers en marcha. El objetivo de v1 es el **primer MP4 local** sin mezclar tres orquestadores.
 
+**Ecosistema viejo abandonado.** YouToMagic, VisuaLibrary, FacelessCreator, VigilCut y `package.yaml` 0.1 **no se implementan ni se extienden**. Esta suite (`Job`, un dashboard observador, workers locales) es el producto. FacelessCreator queda como prototipo historico, no como fuente de codigo.
+
 Repo: https://github.com/Joereload2/faceless-production-suite
 
 ## Como leer esto (en este orden)
@@ -91,4 +93,4 @@ No se empieza por Wan ni por cloud. Detalle: [`docs/plan/02-roadmap-etapas.md`](
 
 ## Relacion con FacelessCreator
 
-`Joereload2/FacelessCreator` es un prototipo anterior. **No se implementa en paralelo.** Ver [`docs/plan/05-relacion-facelesscreator.md`](docs/plan/05-relacion-facelesscreator.md).
+`Joereload2/FacelessCreator` es un prototipo anterior. **No se implementa en paralelo ni se retoma YTM→VL→FC→VigilCut.** Ver [`docs/plan/05-relacion-facelesscreator.md`](docs/plan/05-relacion-facelesscreator.md).

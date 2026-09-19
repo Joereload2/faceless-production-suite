@@ -67,7 +67,8 @@ Fuente de verdad: `packages/schema/job.ts` (`LIMITS`, `MODULE_TIMEOUT_SEC`).
 | `softProjectBytes` | 5 GiB | Warning en UI; no bloquea |
 | `maxImageVariants` | 4 | Variantes por job `image` |
 | `POLL_MS` | 1500 | Intervalo de GET job desde UI |
-| `CLAIM_STALE_MS` | timeoutSec * 1000 + 15000 | Running sin heartbeat → recoverable |
+| `LEASE_MS` | 30000 | Lease corto; heartbeat cada `HEARTBEAT_MS` (10000). Tres heartbeats perdidos = worker muerto |
+| `deadline_at` | now + timeoutSec al claim | No se renueva. Sweeper marca `timeout` |
 | `ratio` | `null` | Si no hay `subscribers` medidos |
 
 Timeouts (s): image 180, video 900, tts 120, captions 300, stock 60, seo 180, assemble 600.

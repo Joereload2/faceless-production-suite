@@ -36,9 +36,11 @@ export interface CaptionsInput {
 
 export interface AssembleClip {
   fileJobId: string;
+  fileName: string;
   fileKind: "image" | "stock" | "video";
-  startSec: number;
-  endSec: number;
+  timelineStartSec: number;
+  timelineEndSec: number;
+  sourceInSec?: number;
 }
 
 export interface AssembleSpec {
