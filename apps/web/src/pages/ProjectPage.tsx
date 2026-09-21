@@ -32,7 +32,11 @@ export function ProjectPage() {
       </p>
       <h1>{project.data?.title ?? "Proyecto"}</h1>
       {project.data ? <p>Canal {project.data.channel} · {project.data.bytesUsed} bytes</p> : null}
-      <ApprovalPanel />
+      <ApprovalPanel
+        projectId={projectId}
+        jobs={jobs.data?.jobs ?? []}
+        onApproved={() => void project.refetch()}
+      />
       <JobForm projectId={projectId} onCreated={() => void jobs.refetch()} />
       <h2>Jobs</h2>
       <JobTable jobs={jobs.data?.jobs ?? []} onChanged={() => void jobs.refetch()} />

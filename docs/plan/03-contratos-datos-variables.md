@@ -122,7 +122,7 @@ Reglas:
 | `captions` | worker-cpu | `{ audioJobId }` | `captions.srt` |
 | `assemble` | worker-cpu | `{ spec: AssembleSpec }` con `fileName`, `timelineStartSec`/`timelineEndSec`; audio mezclado una vez al final | `export/master_16x9.mp4` |
 | `seo` | worker-cpu / cron | `{ siteUrl, days }` | tabla huecos en output.meta |
-| `script` | worker-cpu | `{ brief, language, targetDurationSec }` | `script.json` + `shotlist.json` |
+| `script` | worker-cpu | `{ brief, language, targetDurationSec }` | `script/<jobId>/script.json` + `script/<jobId>/shotlist.json` (puerta 1 hashea bytes de `script.json`) |
 | `thumb` | worker-cpu | `{ masterJobId, title, overlayText, description, tags }` | `export/thumb.png` + ficha YT |
 
 Modulos extra v1 (tras el analisis 18-sep): `script` (guion + shot list, puerta 1), `thumb` (empaque, puerta 2). Outliers y publish siguen fuera del Job (tablas / flujo humano).

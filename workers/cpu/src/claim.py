@@ -72,6 +72,9 @@ def complete_job(
     output_json: str,
     bytes_out: int,
     now_iso: str,
+    tokens_in: int | None = None,
+    tokens_out: int | None = None,
+    stock_calls: int | None = None,
 ) -> None:
     conn.execute("BEGIN IMMEDIATE")
     rows = conn.execute(
@@ -80,10 +83,10 @@ def complete_job(
             "output_json": output_json,
             "bytes_out": bytes_out,
             "cost_usd": None,
-            "tokens_in": None,
-            "tokens_out": None,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
             "gpu_sec": None,
-            "stock_calls": None,
+            "stock_calls": stock_calls,
             "now": now_iso,
             "id": job_id,
             "owner": owner,

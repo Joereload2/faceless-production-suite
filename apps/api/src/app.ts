@@ -5,6 +5,7 @@ import { gate } from "./auth.js";
 import type { Config } from "./config.js";
 import { HttpError, errJson } from "./http.js";
 import { log } from "./log.js";
+import { approvalRoutes } from "./routes/approvals.js";
 import { authRoutes } from "./routes/auth.js";
 import { channelRoutes } from "./routes/channels.js";
 import { fileRoutes } from "./routes/files.js";
@@ -35,6 +36,7 @@ export function createApp(opts: { config: Config; db: DatabaseSync; repoRoot: st
   app.route("/", jobRoutes);
   app.route("/", fileRoutes);
   app.route("/", channelRoutes);
+  app.route("/", approvalRoutes);
   app.notFound((c) => c.json(errJson("validation", "not found"), 404));
   app.onError((err, c) => {
     if (err instanceof HttpError) {
