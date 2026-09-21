@@ -9,6 +9,7 @@ import { openStudioDb } from "./db.js";
 import { sweepOnce } from "./jobs/sweep.js";
 import { log } from "./log.js";
 import { repoRootFrom } from "./paths.js";
+import { serveStaticApp } from "./serve-static.js";
 
 loadDotenv();
 
@@ -31,7 +32,8 @@ setInterval(() => {
   }
 }, LIMITS.SWEEP_MS);
 const app = createApp({ config, db, repoRoot: repoRootFrom(import.meta.url) });
+const fetchHandler = config.WEB_DIST ? serveStaticApp(app, config.WEB_DIST).fetch : app.fetch;
 
-serve({ fetch: app.fetch, hostname: config.STUDIO_HOST, port: config.STUDIO_PORT }, () => {
+serve({ fetch: fetchHandler, hostname: config.STUDIO_HOST, port: config.STUDIO_PORT }, () => {
   log({ level: "info", event: "listen", extra: `${config.STUDIO_HOST}:${config.STUDIO_PORT}` });
 });

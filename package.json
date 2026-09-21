@@ -7,6 +7,7 @@
     "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
     "build:contract": "pnpm --filter @faceless/schema build:contract",
     "dev:api": "pnpm --filter @faceless/api dev",
+    "dev:web": "pnpm --filter @faceless/web dev",
     "dummy-worker": "pnpm --filter @faceless/api dummy-worker"
   }
 }
