@@ -87,3 +87,75 @@ approvalRoutes.post("/projects/:id/approvals/script", async (c) => {
     },
   });
 });
+
+function approveArtifact(
+  db: DatabaseSync,
+  dataDir: string,
+  projectId: string,
+  jobId: string,
+  module: string,
+  rel: string,
+  idCol: string,
+  hashCol: string,
+  atCol: string,
+) {
+  loadProject(db, projectId);
+  const job = db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId) as JobRow | undefined;
+  if (!job || job.project_id !== projectId || job.module !== module || job.status !== "done") {
+    throw new HttpError(400, "validation", `${module} job not approvable`);
+  }
+  const file = join(dataDir, "projects", projectId, rel);
+  if (!existsSync(file)) throw new HttpError(400, "validation", `${rel} missing`);
+  const hash = createHash("sha256").update(readFileSync(file)).digest("hex");
+  const now = utcIso();
+  db.prepare(
+    `UPDATE projects SET ${idCol} = ?, ${hashCol} = ?, ${atCol} = ?, updated_at = ? WHERE id = ?`,
+  ).run(job.id, hash, now, now, projectId);
+  return mapProject(loadProject(db, projectId));
+}
+
+approvalRoutes.post("/projects/:id/approvals/master", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HttpError(400, "validation", "invalid json");
+  }
+  const jobId = (body as { jobId?: string }).jobId;
+  if (!jobId) throw new HttpError(400, "validation", "jobId required");
+  const p = approveArtifact(
+    c.get("db"),
+    c.get("config").DATA_DIR,
+    c.req.param("id"),
+    jobId,
+    "assemble",
+    "export/master_16x9.mp4",
+    "approved_master_job_id",
+    "approved_master_hash",
+    "approved_master_at",
+  );
+  return c.json({ ok: true, approvals: p.approvals });
+});
+
+approvalRoutes.post("/projects/:id/approvals/thumb", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HttpError(400, "validation", "invalid json");
+  }
+  const jobId = (body as { jobId?: string }).jobId;
+  if (!jobId) throw new HttpError(400, "validation", "jobId required");
+  const p = approveArtifact(
+    c.get("db"),
+    c.get("config").DATA_DIR,
+    c.req.param("id"),
+    jobId,
+    "thumb",
+    "export/thumb.png",
+    "approved_thumb_job_id",
+    "approved_thumb_hash",
+    "approved_thumb_at",
+  );
+  return c.json({ ok: true, approvals: p.approvals });
+});

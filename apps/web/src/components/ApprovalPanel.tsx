@@ -12,7 +12,11 @@ export function ApprovalPanel({
   onApproved?: () => void;
 }) {
   const doneScripts = jobs.filter((j) => j.module === "script" && j.status === "done");
+  const doneMasters = jobs.filter((j) => j.module === "assemble" && j.status === "done");
+  const doneThumbs = jobs.filter((j) => j.module === "thumb" && j.status === "done");
   const [jobId, setJobId] = useState(doneScripts[0]?.id ?? "");
+  const [masterId, setMasterId] = useState(doneMasters[0]?.id ?? "");
+  const [thumbId, setThumbId] = useState(doneThumbs[0]?.id ?? "");
   const [originalAnalysis, setOriginalAnalysis] = useState(false);
   const [variesStructure, setVariesStructure] = useState(false);
   const [notTemplate, setNotTemplate] = useState(false);
@@ -67,6 +71,69 @@ export function ApprovalPanel({
           }}
         >
           Aprobar guion
+        </button>
+      </p>
+      <p>Puerta 2 — master + thumb</p>
+      <label>
+        Job assemble
+        <select value={masterId} onChange={(e) => setMasterId(e.target.value)}>
+          <option value="">(ninguno)</option>
+          {doneMasters.map((j) => (
+            <option key={j.id} value={j.id}>
+              {j.id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p>
+        <button
+          type="button"
+          disabled={!masterId}
+          onClick={async () => {
+            setError("");
+            try {
+              await api(`/projects/${projectId}/approvals/master`, {
+                method: "POST",
+                body: JSON.stringify({ jobId: masterId }),
+              });
+              onApproved?.();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "error");
+            }
+          }}
+        >
+          Aprobar master
+        </button>
+      </p>
+      <label>
+        Job thumb
+        <select value={thumbId} onChange={(e) => setThumbId(e.target.value)}>
+          <option value="">(ninguno)</option>
+          {doneThumbs.map((j) => (
+            <option key={j.id} value={j.id}>
+              {j.id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p>
+        <button
+          type="button"
+          disabled={!thumbId}
+          onClick={async () => {
+            setError("");
+            try {
+              await api(`/projects/${projectId}/approvals/thumb`, {
+                method: "POST",
+                body: JSON.stringify({ jobId: thumbId }),
+              });
+              onApproved?.();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "error");
+            }
+          }}
+        >
+          Aprobar thumb
         </button>
       </p>
       {error ? <p>{error}</p> : null}

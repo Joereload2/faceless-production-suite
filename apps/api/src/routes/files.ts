@@ -12,6 +12,29 @@ const NAME_RE = /^[A-Za-z0-9._-]+$/;
 
 export const fileRoutes = new Hono<Env>();
 
+const EXPORT_NAMES = new Set(["master_16x9.mp4", "thumb.png", "thumb.svg", "youtube-card.json"]);
+
+const MIME: Record<string, string> = {
+  "master_16x9.mp4": "video/mp4",
+  "thumb.png": "image/png",
+  "thumb.svg": "image/svg+xml",
+  "youtube-card.json": "application/json",
+};
+
+fileRoutes.get("/projects/:id/export/:name", (c) => {
+  const name = c.req.param("name");
+  if (!EXPORT_NAMES.has(name)) throw new HttpError(400, "validation", "traversal");
+  let abs: string;
+  try {
+    abs = confinedFile(c.get("config").DATA_DIR, c.req.param("id"), `export/${name}`);
+  } catch {
+    throw new HttpError(400, "validation", "traversal");
+  }
+  if (!existsSync(abs)) throw new HttpError(404, "validation", "not found");
+  const buf = readFileSync(abs);
+  return c.body(buf, 200, { "Content-Type": MIME[name] ?? "application/octet-stream" });
+});
+
 fileRoutes.get("/jobs/:id/files/:name", (c) => {
   const name = c.req.param("name");
   if (!NAME_RE.test(name)) throw new HttpError(400, "validation", "traversal");
