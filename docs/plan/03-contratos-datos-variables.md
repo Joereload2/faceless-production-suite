@@ -21,6 +21,7 @@ data/
     export/master_16x9.mp4
     export/thumb.svg
     export/thumb.png
+    export/youtube-card.json
     attribution.json      # acumulado del proyecto
 ```
 

@@ -5,6 +5,7 @@ import { api } from "../api";
 import { ApprovalPanel } from "../components/ApprovalPanel";
 import { JobForm } from "../components/JobForm";
 import { JobTable } from "../components/JobTable";
+import { ThumbForm } from "../components/ThumbForm";
 import { POLL_MS } from "../poll";
 import styles from "../styles/app.module.css";
 
@@ -44,6 +45,7 @@ export function ProjectPage() {
         onApproved={() => void project.refetch()}
       />
       <JobForm projectId={projectId} onCreated={() => void jobs.refetch()} />
+      <ThumbForm projectId={projectId} jobs={jobs.data?.jobs ?? []} onCreated={() => void jobs.refetch()} />
       <h2>Jobs</h2>
       <JobTable jobs={jobs.data?.jobs ?? []} onChanged={() => void jobs.refetch()} />
       <h2>Outliers</h2>
