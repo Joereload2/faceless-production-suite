@@ -32,3 +32,20 @@ export function hostHeaders(extra: Record<string, string> = {}): Record<string, 
 export function apiUrl(path: string): string {
   return `http://127.0.0.1:8787${path}`;
 }
+
+export function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json", ...extra };
+}
+
+export async function createProject(
+  app: ReturnType<typeof testApp>["app"],
+  title = "Night library",
+): Promise<string> {
+  const res = await app.request(apiUrl("/projects"), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ title, channel: "demo" }),
+  });
+  const body = (await res.json()) as { id: string };
+  return body.id;
+}

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dummy-worker": "tsx src/dummy-worker.ts"
   },
   "dependencies": {
     "@faceless/schema": "workspace:*",

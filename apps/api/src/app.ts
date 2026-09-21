@@ -6,7 +6,10 @@ import type { Config } from "./config.js";
 import { HttpError, errJson } from "./http.js";
 import { log } from "./log.js";
 import { authRoutes } from "./routes/auth.js";
+import { channelRoutes } from "./routes/channels.js";
+import { fileRoutes } from "./routes/files.js";
 import { healthRoutes } from "./routes/health.js";
+import { jobRoutes } from "./routes/jobs.js";
 import { projectRoutes } from "./routes/projects.js";
 
 export type AppEnv = {
@@ -29,10 +32,16 @@ export function createApp(opts: { config: Config; db: DatabaseSync; repoRoot: st
   app.route("/", healthRoutes);
   app.route("/", authRoutes);
   app.route("/", projectRoutes);
+  app.route("/", jobRoutes);
+  app.route("/", fileRoutes);
+  app.route("/", channelRoutes);
   app.notFound((c) => c.json(errJson("validation", "not found"), 404));
   app.onError((err, c) => {
     if (err instanceof HttpError) {
-      return c.json(errJson(err.errorCode, err.message), err.status as 400);
+      return c.json(
+        errJson(err.errorCode, err.message),
+        err.status as 400 | 401 | 403 | 404 | 409 | 429 | 500,
+      );
     }
     if (err instanceof ZodError) {
       const first = err.issues[0];

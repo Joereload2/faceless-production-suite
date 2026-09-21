@@ -55,7 +55,7 @@ export function mapProject(row: ProjectRow): ProjectDto {
   };
 }
 
-type JobRow = {
+export type JobRow = {
   id: string;
   project_id: string;
   module: string;
