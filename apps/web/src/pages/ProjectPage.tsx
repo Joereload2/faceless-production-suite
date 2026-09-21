@@ -9,6 +9,7 @@ import { POLL_MS } from "../poll";
 import styles from "../styles/app.module.css";
 
 type Project = { id: string; title: string; channel: string; bytesUsed: number };
+type Outlier = { videoId: string; title: string; views: number | null; ratio: number | null };
 
 export function ProjectPage() {
   const { id } = useParams();
@@ -23,6 +24,11 @@ export function ProjectPage() {
     queryFn: () => api<{ jobs: Job[] }>(`/projects/${projectId}/jobs`),
     enabled: Boolean(projectId),
     refetchInterval: POLL_MS,
+  });
+  const outliers = useQuery({
+    queryKey: ["outliers", projectId],
+    queryFn: () => api<{ rows: Outlier[] }>(`/projects/${projectId}/outliers`),
+    enabled: Boolean(projectId),
   });
 
   return (
@@ -40,6 +46,27 @@ export function ProjectPage() {
       <JobForm projectId={projectId} onCreated={() => void jobs.refetch()} />
       <h2>Jobs</h2>
       <JobTable jobs={jobs.data?.jobs ?? []} onChanged={() => void jobs.refetch()} />
+      <h2>Outliers</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Video</th>
+            <th>Titulo</th>
+            <th>Views</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(outliers.data?.rows ?? []).map((r) => (
+            <tr key={r.videoId}>
+              <td>{r.videoId}</td>
+              <td>{r.title}</td>
+              <td>{r.views ?? "—"}</td>
+              <td>{r.ratio ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </main>
   );
 }

@@ -11,6 +11,7 @@ import { channelRoutes } from "./routes/channels.js";
 import { fileRoutes } from "./routes/files.js";
 import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
+import { outlierRoutes } from "./routes/outliers.js";
 import { projectRoutes } from "./routes/projects.js";
 
 export type AppEnv = {
@@ -37,6 +38,7 @@ export function createApp(opts: { config: Config; db: DatabaseSync; repoRoot: st
   app.route("/", fileRoutes);
   app.route("/", channelRoutes);
   app.route("/", approvalRoutes);
+  app.route("/", outlierRoutes);
   app.notFound((c) => c.json(errJson("validation", "not found"), 404));
   app.onError((err, c) => {
     if (err instanceof HttpError) {

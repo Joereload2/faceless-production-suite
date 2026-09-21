@@ -8,6 +8,8 @@ Todavia no hay workers en marcha. El objetivo de v1 es el **primer MP4 local** s
 
 Repo: https://github.com/Joereload2/faceless-production-suite
 
+Extension MV3 (E5): carga `apps/extension` unpacked en `chrome://extensions`, copia el id a `EXTENSION_ID` en `.env` y reinicia la API. Sin ese id no se envia CORS `chrome-extension://`.
+
 ## Como leer esto (en este orden)
 
 **Si vas a codear (agente barato):** [`AGENTS.md`](AGENTS.md) + **un** ticket de [`docs/implement/PACK-V1.md`](docs/implement/PACK-V1.md). No reabrir decisiones. Un PR por sesion. Indice: [`docs/implement/README.md`](docs/implement/README.md).
