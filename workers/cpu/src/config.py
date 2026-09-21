@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     DAILY_STOCK_CALLS: int = 80
     ANTHROPIC_API_KEY: str = ""
     ANTHROPIC_MODEL: str = "claude-sonnet-5"
+    PEXELS_API_KEY: str = ""
 
     def contract_path(self) -> Path:
         if self.CONTRACT_JSON.strip():

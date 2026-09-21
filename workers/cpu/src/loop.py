@@ -8,9 +8,10 @@ from config import Settings
 from db import connect
 from log import log
 from modules.script import process_script
+from modules.stock import process_stock
 from modules.tts import process_tts
 
-CPU_MODULES = ["script", "tts"]
+CPU_MODULES = ["script", "tts", "stock"]
 
 
 def run_loop(settings: Settings | None = None) -> None:
@@ -30,3 +31,5 @@ def run_loop(settings: Settings | None = None) -> None:
             process_script(conn, contract, settings, job)
         elif module == "tts":
             process_tts(conn, contract, settings, job)
+        elif module == "stock":
+            process_stock(conn, contract, settings, job)
