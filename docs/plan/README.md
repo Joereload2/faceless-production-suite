@@ -12,6 +12,8 @@ Documentos de este folder. Son la guia del arquitecto y del PM.
 
 Reglas de area: [`../areas/README.md`](../areas/README.md).
 
+**Codigo restante (E0b–E10):** no improvisar. Ejecutar tickets de [`../implement/PACK-V1.md`](../implement/PACK-V1.md). Si el pack y el doc 03 discrepan, gana el pack y el PR de schema actualiza este folder.
+
 ## Regla de oro del plan
 
 Si un documento de area contradice `01-decisiones-cerradas.md`, gana `01`.

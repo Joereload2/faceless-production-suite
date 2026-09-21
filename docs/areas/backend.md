@@ -19,7 +19,7 @@ HTTP, persistencia, validacion, claim helpers, enforce de limites y presupuesto.
 | POST | `/jobs/:id/cancel` | queued o running cooperativo |
 | GET | `/jobs/:id/files/:name` | stream desde workspace |
 
-Auth: header bearer `STUDIO_TOKEN`. Sin token → 401 en todo menos `/health`.
+Auth: cookie HttpOnly `studio_token` (SPA) o Bearer (curl). 401 usa `errorCode: unauthorized`. Sin token → 401 en todo menos `/health`, `/auth/login` y `/auth/logout`.
 
 ## Reglas
 

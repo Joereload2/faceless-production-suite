@@ -35,7 +35,7 @@ No recortar **E0b** ni **E3b**. El spike de ffmpeg va **antes o junto** a E1 (ri
 
 **No incluye.** API, UI, workers.
 
-**Cierre.** README apunta aqui. `job.ts` exporta `LIMITS`, timeouts, `CLAIM_SQL`. Un extraño puede explicar A vs C en 5 lineas.
+**Cierre.** README apunta aqui. `job.ts` exporta `LIMITS`, timeouts, `CLAIM_BY_ID_SQL`. Un extraño puede explicar A vs C en 5 lineas.
 
 **Pruebas.** Revision humana. CI de contrato (`pnpm -r test`).
 

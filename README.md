@@ -10,6 +10,10 @@ Repo: https://github.com/Joereload2/faceless-production-suite
 
 ## Como leer esto (en este orden)
 
+**Si vas a codear (agente barato):** [`AGENTS.md`](AGENTS.md) + **un** ticket de [`docs/implement/PACK-V1.md`](docs/implement/PACK-V1.md). No reabrir decisiones. Un PR por sesion. Indice: [`docs/implement/README.md`](docs/implement/README.md).
+
+Si vas a entender el producto (humano):
+
 1. Este README (2 minutos).
 2. [`docs/plan/01-decisiones-cerradas.md`](docs/plan/01-decisiones-cerradas.md) — que ya esta decidido. No reabrir sin ADR.
 3. [`docs/plan/02-roadmap-etapas.md`](docs/plan/02-roadmap-etapas.md) — que se construye, en que orden, que prueba cierra cada etapa.
@@ -18,13 +22,15 @@ Repo: https://github.com/Joereload2/faceless-production-suite
 6. [`docs/areas/`](docs/areas/README.md) — reglas de frontend, backend, workers, extension, QA, seguridad, producto.
 7. Reviews: [`docs/review/`](docs/review/).
 
-Si vas a escribir codigo y solo tienes 10 minutos: lee **decisiones** + **area que te toca** + `packages/schema/job.ts`.
+Si vas a escribir codigo y solo tienes 10 minutos: `AGENTS.md` + el ticket del pack + `packages/schema/job.ts`.
 
 ## Mapa del repo
 
 | Ruta | Que es |
 |---|---|
 | `docs/plan/` | Plan PM + arquitectura. Etapas, decisiones, contratos. |
+| `docs/implement/` | Pack de tickets para codear sin decidir. Fuente de PRs E0b–E10. |
+| `AGENTS.md` | Constitucion del agente de codigo. Un ticket por sesion. |
 | `docs/areas/` | Reglas por rol. |
 | `docs/producto/` | Flujo de producto (indice). |
 | `docs/arquitectura/` | Stack, topologia, ADR v1. |

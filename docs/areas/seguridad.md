@@ -6,7 +6,7 @@ Local-first. El estudio no es un SaaS v1.
 
 1. Bind `127.0.0.1` en dashboard, API, Comfy, workers HTTP.
 2. Acceso desde otro dispositivo = Tailscale. No ngrok por ahora.
-3. `STUDIO_TOKEN` en POST/GET de datos. `/health` publico en localhost ok.
+3. `STUDIO_TOKEN` solo en servidor (cookie HMAC `studio_token` o Bearer en curl). `/health` publico en 127.0.0.1 ok. La SPA nunca embebe el token. 401 usa `errorCode: unauthorized`.
 4. `.env` gitignored. `.env.example` sin secretos.
 5. Path confinement a `DATA_DIR`.
 6. Procesos externos con argv. Timeout. No shell.

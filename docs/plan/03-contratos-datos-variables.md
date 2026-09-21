@@ -36,9 +36,17 @@ CREATE TABLE projects (
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL,
   bytes_used    INTEGER NOT NULL DEFAULT 0,
-  approved_script INTEGER NOT NULL DEFAULT 0,
-  approved_master INTEGER NOT NULL DEFAULT 0,
-  approved_thumb  INTEGER NOT NULL DEFAULT 0
+  approved_script_job_id TEXT,
+  approved_script_hash   TEXT,
+  approved_script_at     TEXT,
+  approved_master_job_id TEXT,
+  approved_master_hash   TEXT,
+  approved_master_at     TEXT,
+  approved_thumb_job_id  TEXT,
+  approved_thumb_hash    TEXT,
+  approved_thumb_at      TEXT,
+  originality_checklist_json TEXT,
+  publish_checklist_json TEXT
 );
 
 CREATE TABLE jobs (
@@ -96,7 +104,12 @@ Reglas:
 - `engine` = `local` en v1. `cloud` rechazado si `CLOUD_JOBS` != `1`.
 - `progress` = 0..1.
 - `input` se valida con Zod **por modulo** antes de persistir.
-- `error` es mensaje seguro para humanos. `errorCode` es maquina: `timeout` | `stale` | `budget` | `validation` | `io` | `config` | `canceled` | `internal` | `idempotency_conflict`.
+- `error` es mensaje seguro para humanos. `errorCode` es maquina: `timeout` | `stale` | `budget` | `validation` | `io` | `config` | `canceled` | `internal` | `idempotency_conflict` | `unauthorized`.
+- Aprobaciones ligadas a artefacto (`approved_*_job_id` + hash + at), no booleanos. Nuevo `assemble` (insert, no replay) anula master.
+- Auth SPA: cookie HttpOnly `studio_token` (HMAC). Bearer solo curl.
+- FIFO: `claimPickSql(modules)` + `CLAIM_BY_ID_SQL` dentro de `BEGIN IMMEDIATE`.
+- Modulos `script` y `thumb` en Zod `ModuleInput`.
+- SQL de cola: parametros con nombre (`:owner`, `:now`, ...) para que TS y Python bindeen igual.
 
 ## Modulos
 
@@ -109,22 +122,24 @@ Reglas:
 | `captions` | worker-cpu | `{ audioJobId }` | `captions.srt` |
 | `assemble` | worker-cpu | `{ spec: AssembleSpec }` con `fileName`, `timelineStartSec`/`timelineEndSec`; audio mezclado una vez al final | `export/master_16x9.mp4` |
 | `seo` | worker-cpu / cron | `{ siteUrl, days }` | tabla huecos en output.meta |
-| `script` | worker-cpu | tono + brief | `script.json` + `shotlist.json` |
-| `thumb` | worker-cpu | master/job ids | `export/thumb.png` + ficha YT |
+| `script` | worker-cpu | `{ brief, language, targetDurationSec }` | `script.json` + `shotlist.json` |
+| `thumb` | worker-cpu | `{ masterJobId, title, overlayText, description, tags }` | `export/thumb.png` + ficha YT |
 
 Modulos extra v1 (tras el analisis 18-sep): `script` (guion + shot list, puerta 1), `thumb` (empaque, puerta 2). Outliers y publish siguen fuera del Job (tablas / flujo humano).
 
 ## SQL de claim, heartbeat y sweeper
 
-Fuente: `packages/schema/job.ts` (`CLAIM_BY_ID_SQL`, `HEARTBEAT_SQL`, `SWEEP_*`).
+Fuente: `packages/schema/job.ts`, exportado a `contract.json` (`version: 2`). Todo el SQL usa **parametros con nombre** (`:owner`, `:now`, ...) para que TS y Python bindeen igual. Requiere SQLite >= 3.35 (`RETURNING`).
 
-Claim por id (CAS). El worker de cola usa el mismo CAS sobre el `id` mas viejo `queued` del modulo. Comprobar fila `RETURNING`.
+- **Elegir candidato**: `claimPickSql(modules)` (FIFO + prioridad de modulo, `cancel_requested=0`) y luego `CLAIM_BY_ID_SQL`; si no hay fila, repetir. Python usa `contract.sql.claimPickTemplate` y reemplaza `__MODULES__` tras validar contra `contract.modules`.
+- **Claim** (`CLAIM_BY_ID_SQL`, CAS por id). Devuelve la fila o **ninguna**: perdiste la carrera, el job tiene `cancel_requested=1`, o (modulos GPU) ya hay otro GPU `running`. Nunca lanza por esos casos; `one_gpu_running` queda como red de seguridad.
+- **Heartbeat** (`HEARTBEAT_SQL`) renueva **solo** `lease_until` (~30 s) y devuelve `cancel_requested`. **Sin fila = lease perdido**: el worker deja de trabajar y descarta su output. No toca `deadline_at`.
+- **Sweeper** (`SWEEP_SQLS`, cada `SWEEP_MS` y al boot): correr **las dos** sentencias. Son disjuntas, el orden no importa: deadline vencido = `timeout`; lease vencido (o `NULL`) con deadline vigente = `stale`.
+- **Transiciones terminales** (`COMPLETE_SQL`, `FAIL_SQL`, `CANCEL_RUNNING_SQL`, `ACK_CANCEL_SQL`) estan guardadas por `status='running' AND claimed_by=:owner`. Sin fila = ya no eres el dueno; no reintentar ni sobrescribir.
+- **Cancel** (API): `CANCEL_QUEUED_SQL`; si no devuelve fila, `REQUEST_CANCEL_SQL` (flag cooperativo). El worker lo ve en el heartbeat y responde con `ACK_CANCEL_SQL` (o `CANCEL_RUNNING_SQL` en el dummy/kill).
+- En Python usar `fetchall()` con toda sentencia `RETURNING`, para que se ejecute hasta el final.
 
-Heartbeat renueva **solo** `lease_until` (~30 s) y devuelve `cancel_requested`. No toca `deadline_at`.
-
-Sweeper periodico (`SWEEP_MS`, proceso API): `lease_until < now` → `stale`; `deadline_at < now` → `timeout`. El reconcile de boot es el mismo sweep.
-
-PRAGMAs: WAL, `busy_timeout=5000`, `foreign_keys=ON`. Escrituras de claim/heartbeat: `BEGIN IMMEDIATE`.
+PRAGMAs: `busy_timeout` **primero** (valor = `LIMITS.SQLITE_BUSY_TIMEOUT_MS`), luego WAL, `foreign_keys=ON`. Escrituras de claim/heartbeat: `BEGIN IMMEDIATE`.
 
 Timestamps: siempre `toISOString()` UTC con `Z`.
 

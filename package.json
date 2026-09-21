@@ -3,8 +3,9 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
-    "build:contract": "pnpm --filter @faceless/schema build:contract"
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
+    "build:contract": "pnpm --filter @faceless/schema build:contract",
+    "dev:api": "pnpm --filter @faceless/api dev"
   }
 }

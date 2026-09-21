@@ -1,0 +1,7 @@
+{
+  "id": "demo",
+  "language": "en",
+  "piperVoice": "en_US-lessac-medium",
+  "anthropicModel": "claude-sonnet-5",
+  "defaultPreset": "image-v1"
+}

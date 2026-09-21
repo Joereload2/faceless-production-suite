@@ -32,7 +32,7 @@ QA no es probar a mano al final. Cada etapa del roadmap trae IDs de prueba.
 
 ## Tests del schema (E0)
 
-`packages/schema/job.test.ts`: timeouts, LIMITS, CLAIM_SQL contiene status queued, defaultTimeout.
+`packages/schema/job.test.ts`: timeouts y LIMITS; claim, heartbeat, sweeps y transiciones terminales contra SQLite real (DDL tomado de `docs/plan/03`); carrera de claim entre procesos OS reales (`test-support/claim-worker.ts`); el mismo SQL corrido desde Python `sqlite3`.
 
 ## CI minimo (desde E1)
 

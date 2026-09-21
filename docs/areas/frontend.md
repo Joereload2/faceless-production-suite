@@ -13,9 +13,9 @@ Crear proyectos, crear jobs, mostrar estado, cancelar, aprobar puertas. Nada mas
 3. **Idempotencia visible.** El form genera `idempotencyKey` (ulid) antes del POST. Un doble click reusa la key.
 4. **La fuente de verdad es GET.** Poll cada `LIMITS.POLL_MS`. Si el poll falla, se muestra error de red; no se inventa un status.
 5. **Estados.** Pintar `queued | running | done | error | canceled` con el `error` del server.
-6. **Puertas.** Checkboxes `approvedScript`, `approvedMaster`, `approvedThumb`. Publish deshabilitado si alguna es false.
+6. **Puertas.** No hay checkboxes booleanos `approvedScript` / `approvedMaster` / `approvedThumb`. El panel muestra tripletas `{ jobId, hash, at }` o "sin aprobar". Publish deshabilitado si falta script, master o thumb, o si el hash no coincide con disco (GET /projects/:id/approvals y GET publish-checklist).
 7. **Archivos.** Links de descarga contra la API. No leer `data/` por file://.
-8. **Token.** Header `Authorization: Bearer $STUDIO_TOKEN`.
+8. **Token.** La SPA **no** envia `Authorization: Bearer`. Login `POST /auth/login` setea cookie HttpOnly `studio_token`. `fetch(..., { credentials: "include" })`. Cero `VITE_STUDIO_TOKEN`. Cero token en localStorage. Abrir siempre `http://127.0.0.1:5173`, nunca localhost.
 9. **Accesibilidad minima.** Labels en inputs, foco visible, tablas con thead.
 10. **Componentes.** Presentacionales vs hooks de API. El hook no calcula loudness ni ratio.
 

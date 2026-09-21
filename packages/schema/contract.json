@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "modules": {
     "image": 180,
     "video": 900,
@@ -28,7 +28,12 @@
     "SQLITE_BUSY_TIMEOUT_MS": 5000,
     "LUFS_TARGET": -14,
     "SEGMENT_SEC_MIN": 15,
-    "SEGMENT_SEC_MAX": 30
+    "SEGMENT_SEC_MAX": 30,
+    "IMPRESSION_FLOOR": 1000,
+    "SEO_CTR_GAP": 0.02,
+    "SEO_ROW_LIMIT": 200,
+    "SEO_CLAUDE_ROWS": 40,
+    "SCRIPT_MAX_TOKENS": 4096
   },
   "errorCodes": [
     "timeout",
@@ -39,18 +44,43 @@
     "config",
     "canceled",
     "internal",
-    "idempotency_conflict"
+    "idempotency_conflict",
+    "unauthorized"
   ],
   "pragmas": [
-    "PRAGMA journal_mode = WAL",
     "PRAGMA busy_timeout = 5000",
+    "PRAGMA journal_mode = WAL",
     "PRAGMA foreign_keys = ON"
   ],
+  "claimOrder": [
+    "script",
+    "tts",
+    "captions",
+    "assemble",
+    "stock",
+    "seo",
+    "thumb",
+    "image",
+    "video"
+  ],
   "sql": {
-    "claimById": "UPDATE jobs\n   SET status = 'running',\n       claimed_by = ?,\n       updated_at = ?,\n       lease_until = ?,\n       deadline_at = ?\n WHERE id = ? AND status = 'queued'\nRETURNING *",
+    "claimById": "UPDATE jobs\n   SET status = 'running',\n       claimed_by = :owner,\n       updated_at = :now,\n       lease_until = :lease_until,\n       deadline_at = :deadline_at\n WHERE id = :id\n   AND status = 'queued'\n   AND cancel_requested = 0\n   AND (module NOT IN ('image', 'video')\n        OR NOT EXISTS (SELECT 1 FROM jobs\n                        WHERE status = 'running' AND module IN ('image', 'video')))\nRETURNING *",
+    "claimPickTemplate": "SELECT id, timeout_sec FROM jobs\n WHERE status = 'queued' AND cancel_requested = 0\n   AND module IN (__MODULES__)\n ORDER BY CASE module WHEN 'script' THEN 1 WHEN 'tts' THEN 2 WHEN 'captions' THEN 3 WHEN 'assemble' THEN 4 WHEN 'stock' THEN 5 WHEN 'seo' THEN 6 WHEN 'thumb' THEN 7 WHEN 'image' THEN 8 WHEN 'video' THEN 9 ELSE 99 END, created_at ASC, id ASC\n LIMIT 1",
     "heartbeat": "UPDATE jobs\n   SET updated_at = :now, lease_until = :lease_until\n WHERE id = :id AND status = 'running' AND claimed_by = :owner\nRETURNING cancel_requested",
-    "sweepStale": "UPDATE jobs\n   SET status = 'error', error_code = 'stale',\n       error = 'lease expired', updated_at = :now\n WHERE status = 'running' AND lease_until < :now",
+    "complete": "UPDATE jobs\n   SET status = 'done', progress = 1,\n       output_json = :output_json, bytes_out = :bytes_out,\n       cost_usd = :cost_usd, tokens_in = :tokens_in, tokens_out = :tokens_out,\n       gpu_sec = :gpu_sec, stock_calls = :stock_calls,\n       error = NULL, error_code = NULL,\n       claimed_by = NULL, lease_until = NULL,\n       updated_at = :now\n WHERE id = :id AND status = 'running' AND claimed_by = :owner\nRETURNING id",
+    "fail": "UPDATE jobs\n   SET status = 'error', error_code = :error_code, error = :error,\n       claimed_by = NULL, lease_until = NULL, updated_at = :now\n WHERE id = :id AND status = 'running' AND claimed_by = :owner\nRETURNING id",
+    "cancelRunning": "UPDATE jobs\n   SET status = 'canceled', error_code = 'canceled', error = 'canceled',\n       updated_at = :now, claimed_by = NULL, lease_until = NULL,\n       cancel_requested = 1\n WHERE id = :id AND status = 'running' AND claimed_by = :owner\nRETURNING id",
+    "cancelQueued": "UPDATE jobs\n   SET status = 'canceled', error_code = 'canceled', updated_at = :now\n WHERE id = :id AND status = 'queued'\nRETURNING id",
+    "requestCancel": "UPDATE jobs\n   SET cancel_requested = 1, updated_at = :now\n WHERE id = :id AND status = 'running'\nRETURNING id",
+    "ackCancel": "UPDATE jobs\n   SET status = 'canceled', error_code = 'canceled',\n       error = 'canceled by request',\n       claimed_by = NULL, lease_until = NULL, updated_at = :now\n WHERE id = :id AND status = 'running' AND claimed_by = :owner AND cancel_requested = 1\nRETURNING id",
+    "addBytes": "UPDATE projects\n   SET bytes_used = bytes_used + :delta, updated_at = :now\n WHERE id = :id",
+    "reconcileBytes": "UPDATE projects\n   SET bytes_used = (\n     SELECT COALESCE(SUM(bytes_out), 0) FROM jobs\n      WHERE jobs.project_id = projects.id AND jobs.bytes_out IS NOT NULL\n   )",
+    "sweepStale": "UPDATE jobs\n   SET status = 'error', error_code = 'stale',\n       error = 'lease expired', updated_at = :now\n WHERE status = 'running'\n   AND (lease_until IS NULL OR lease_until < :now)\n   AND (deadline_at IS NULL OR deadline_at >= :now)",
     "sweepTimeout": "UPDATE jobs\n   SET status = 'error', error_code = 'timeout',\n       error = 'deadline exceeded', updated_at = :now\n WHERE status = 'running' AND deadline_at < :now",
+    "sweepAll": [
+      "UPDATE jobs\n   SET status = 'error', error_code = 'timeout',\n       error = 'deadline exceeded', updated_at = :now\n WHERE status = 'running' AND deadline_at < :now",
+      "UPDATE jobs\n   SET status = 'error', error_code = 'stale',\n       error = 'lease expired', updated_at = :now\n WHERE status = 'running'\n   AND (lease_until IS NULL OR lease_until < :now)\n   AND (deadline_at IS NULL OR deadline_at >= :now)"
+    ],
     "oneGpuRunning": "CREATE UNIQUE INDEX IF NOT EXISTS one_gpu_running\n  ON jobs(status)\n  WHERE status = 'running' AND module IN ('image', 'video')"
   }
 }
