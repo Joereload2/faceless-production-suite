@@ -8,7 +8,7 @@ apps/api/                 # Hono + Drizzle
 apps/extension/           # MV3
 packages/schema/          # tipos y constantes — ya existe
 workers/cpu/              # Python 3.11 Piper / whisper / ffmpeg / stock
-workers/gpu/              # Python FastAPI + cliente Comfy
+workers/gpu/              # Python 3.11 loop + httpx Comfy (no FastAPI)
 docs/                     # este arbol
 data/                     # gitignore
 presets/image-v1.json     # workflows Comfy sin pesos

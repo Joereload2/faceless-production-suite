@@ -23,7 +23,7 @@ Ese ecosistema esta abandonado.
 - Inventar un modulo Job sin `packages/schema` + doc 03 **en el mismo PR**.
 - Copiar numeros (`LIMITS`, timeouts, SQL) fuera de `@faceless/schema` / `contract.json`.
 - Poner secretos en `Job.input`, logs, SQLite, fixtures o `VITE_*`.
-- Bind `0.0.0.0`. `CLOUD_JOBS=1`. Electron, LangGraph, n8n, K8s, Wan. FastAPI/uvicorn en workers.
+- Bind `0.0.0.0`. `CLOUD_JOBS=1`. Electron, LangGraph, n8n, K8s, Wan.
 - `child_process` / `subprocess` con string de shell. Siempre argv list.
 - Disparar jobs desde `useEffect` de mount.
 - Segundo orquestador. El dummy worker usa el mismo SQL de claim.
@@ -38,7 +38,7 @@ Ese ecosistema esta abandonado.
 - `apps/extension` MV3
 - `packages/schema` unico sitio de numeros y Zod de inputs
 - `workers/cpu` Python 3.11 (Piper, whisper, ffmpeg, stock, seo, script)
-- `workers/gpu` Python 3.11 loop + httpx a Comfy (cero FastAPI/uvicorn)
+- `workers/gpu` Python 3.11 loop + httpx a Comfy
 - `workers/thumb` Node Sharp (desde E7b)
 - `presets/` workflows Comfy sin pesos
 - `channels/demo/` tono + channel.json

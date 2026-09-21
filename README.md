@@ -93,7 +93,7 @@ No se empieza por Wan ni por cloud. Detalle: [`docs/plan/02-roadmap-etapas.md`](
 | Schema | `packages/schema` |
 | Extension | MV3 + Vite CRXJS |
 | CPU | Python 3.11 + Piper + faster-whisper + ffmpeg |
-| GPU | Python FastAPI + ComfyUI, un consumer |
+| GPU | Python loop + cliente httpx a ComfyUI (127.0.0.1:8188). Cero FastAPI. |
 | Thumb | Sharp + SVG |
 | Stock | Pexels + Unsplash APIs |
 | SEO | cron + GSC API + Claude; sin publish |

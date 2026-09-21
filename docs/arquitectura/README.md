@@ -26,7 +26,7 @@ Leer junto a [`../plan/01-decisiones-cerradas.md`](../plan/01-decisiones-cerrada
 | Workspace | pnpm + TS 5 strict + Biome + Vitest |
 | Dashboard + API | Vite, React 18, Hono, Drizzle, SQLite, Zod |
 | Extension | MV3, Vite CRXJS |
-| Imagen / video | Python FastAPI + ComfyUI |
+| Imagen / video | Python loop + ComfyUI |
 | Voz | Piper + ffmpeg loudnorm -14 LUFS |
 | Stock | Pexels (+ Unsplash despues) |
 | Subtitulos | faster-whisper small |

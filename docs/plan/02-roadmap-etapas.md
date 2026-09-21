@@ -187,7 +187,7 @@ CI **no** corre Piper. CI corre el fake.
 
 **Incluye**
 
-- `workers/gpu` FastAPI. Comfy en `127.0.0.1:8188`.
+- worker GPU = loop claim. Comfy en `127.0.0.1:8188`.
 - Un archivo `presets/image-v1.json` commiteado (sin pesos).
 - `maxImageVariants = 4`. `maxQueuedGpu = 3`.
 - GPU lock: si hay un `running` image/video, el siguiente espera en cola.
