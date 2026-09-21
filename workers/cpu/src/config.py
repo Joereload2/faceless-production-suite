@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     ANTHROPIC_MODEL: str = "claude-sonnet-5"
     PEXELS_API_KEY: str = ""
+    GSC_CLIENT_SECRET_PATH: str = ""
 
     def contract_path(self) -> Path:
         if self.CONTRACT_JSON.strip():

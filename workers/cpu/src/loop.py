@@ -10,10 +10,11 @@ from log import log
 from modules.assemble import process_assemble
 from modules.captions import process_captions
 from modules.script import process_script
+from modules.seo import process_seo
 from modules.stock import process_stock
 from modules.tts import process_tts
 
-CPU_MODULES = ["script", "tts", "captions", "assemble", "stock"]
+CPU_MODULES = ["script", "tts", "captions", "assemble", "stock", "seo"]
 
 
 def run_loop(settings: Settings | None = None) -> None:
@@ -39,3 +40,5 @@ def run_loop(settings: Settings | None = None) -> None:
             process_captions(conn, contract, settings, job)
         elif module == "assemble":
             process_assemble(conn, contract, settings, job)
+        elif module == "seo":
+            process_seo(conn, contract, settings, job)

@@ -11,6 +11,7 @@ import styles from "../styles/app.module.css";
 
 type Project = { id: string; title: string; channel: string; bytesUsed: number };
 type Outlier = { videoId: string; title: string; views: number | null; ratio: number | null };
+type SeoGap = { query: string; impressions: number; clicks: number; ctr: number; action: string };
 
 export function ProjectPage() {
   const { id } = useParams();
@@ -65,6 +66,30 @@ export function ProjectPage() {
               <td>{r.title}</td>
               <td>{r.views ?? "—"}</td>
               <td>{r.ratio ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h2>SEO</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Query</th>
+            <th>Impresiones</th>
+            <th>CTR</th>
+            <th>Accion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(
+            (jobs.data?.jobs.find((j) => j.module === "seo" && j.status === "done")?.output?.meta
+              ?.gaps as SeoGap[] | undefined) ?? []
+          ).map((g) => (
+            <tr key={g.query}>
+              <td>{g.query}</td>
+              <td>{g.impressions}</td>
+              <td>{g.ctr}</td>
+              <td>{g.action}</td>
             </tr>
           ))}
         </tbody>
