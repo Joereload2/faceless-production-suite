@@ -11,6 +11,7 @@ from subprocess import TimeoutExpired
 from claim import complete_job, fail_job, utc_iso
 from config import Settings
 from ffmpeg_argv import ffprobe_cmd, loudnorm_cmd, piper_cmd
+from modules.clone_tts import resolve_ref_wav, synthesize_clone
 from paths import job_dir
 from process_kill import kill_tree, spawn
 
@@ -53,10 +54,22 @@ def process_tts(conn, contract: dict, settings: Settings, job: dict, piper_voice
     job_id = str(job["id"])
     project_id = str(job["project_id"])
     timeout_sec = int(job["timeout_sec"])
-    voice = resolve_voice(settings, piper_voice_id)
-    if not voice.is_file():
-        fail_job(conn, contract, job_id, owner, "config", "piper voice missing", utc_iso())
-        return
+    payload = json.loads(job["input_json"])
+    text = str(payload.get("text") or "")
+    language = str(payload.get("language") or settings.CLONE_LANGUAGE or "es")
+    engine = (settings.TTS_ENGINE or "piper").strip().lower()
+    voice_label = "clone" if engine == "clone" else piper_voice_id
+
+    if engine == "clone":
+        ref = resolve_ref_wav(settings.DATA_DIR, settings.CLONE_REF_WAV)
+        if not ref.is_file():
+            fail_job(conn, contract, job_id, owner, "config", "clone reference missing", utc_iso())
+            return
+    else:
+        voice = resolve_voice(settings, piper_voice_id)
+        if not voice.is_file():
+            fail_job(conn, contract, job_id, owner, "config", "piper voice missing", utc_iso())
+            return
 
     root = job_dir(settings.DATA_DIR, project_id, "tts", job_id)
     tmp = root / "tmp"
@@ -72,15 +85,24 @@ def process_tts(conn, contract: dict, settings: Settings, job: dict, piper_voice
     )
     hb.start()
     try:
-        text = json.loads(job["input_json"]).get("text", "")
-        argv = piper_cmd(settings.PIPER_BIN, str(voice), str(raw))
-        if not isinstance(argv, list) or "cmd.exe" in argv:
-            raise RuntimeError("bad piper argv")
-        try:
-            spawn(argv, timeout_sec=timeout_sec, stdin_bytes=(str(text).strip() + "\n").encode("utf-8"))
-        except TimeoutExpired:
-            fail_job(conn, contract, job_id, owner, "timeout", "deadline exceeded", utc_iso())
-            return
+        if engine == "clone":
+            try:
+                synthesize_clone(text, ref, language, raw)
+            except RuntimeError as e:
+                msg = str(e)
+                if "clone engine missing" in msg:
+                    fail_job(conn, contract, job_id, owner, "config", "clone engine missing", utc_iso())
+                    return
+                raise
+        else:
+            argv = piper_cmd(settings.PIPER_BIN, str(voice), str(raw))
+            if not isinstance(argv, list) or "cmd.exe" in argv:
+                raise RuntimeError("bad piper argv")
+            try:
+                spawn(argv, timeout_sec=timeout_sec, stdin_bytes=(text.strip() + "\n").encode("utf-8"))
+            except TimeoutExpired:
+                fail_job(conn, contract, job_id, owner, "timeout", "deadline exceeded", utc_iso())
+                return
         ln = loudnorm_cmd(settings.FFMPEG_BIN, str(raw), str(tmp / "voice.wav"))
         if not isinstance(ln, list) or "cmd.exe" in ln:
             raise RuntimeError("bad ffmpeg argv")
@@ -109,7 +131,7 @@ def process_tts(conn, contract: dict, settings: Settings, job: dict, piper_voice
                         "bytes": bytes_out,
                     }
                 ],
-                "meta": {"lufsTarget": -14, "voice": piper_voice_id},
+                "meta": {"lufsTarget": -14, "voice": voice_label, "engine": engine, "language": language},
             },
             separators=(",", ":"),
         )

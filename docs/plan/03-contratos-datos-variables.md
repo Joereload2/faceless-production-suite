@@ -116,7 +116,7 @@ Reglas:
 
 | module | Quien lo corre | Input minimo | Output esperado |
 |---|---|---|---|
-| `tts` | worker-cpu | `{ text, voice? }` | `voice.wav` |
+| `tts` | worker-cpu | `{ text, voice?, language?: en\|es }` | `tts/<jobId>/voice.wav` (Piper o clon local si `TTS_ENGINE=clone`) |
 | `stock` | worker-cpu o api | `{ query, orientation, count }` | archivos + attribution |
 | `image` | worker-gpu | `{ prompt, variants 1..4, preset: image-v1 }` | png |
 | `video` | worker-gpu | `{ prompt, seconds, preset: video-v1 }` | mp4 corto |

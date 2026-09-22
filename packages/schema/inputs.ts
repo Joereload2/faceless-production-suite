@@ -11,6 +11,7 @@ export const TtsInputZ = z
   .object({
     text: z.string().min(1).max(5000),
     voice: z.string().min(1).max(80).optional(),
+    language: z.enum(["en", "es"]).optional(),
   })
   .strict();
 export type TtsInput = z.infer<typeof TtsInputZ>;

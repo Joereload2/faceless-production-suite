@@ -6,6 +6,10 @@ describe("inputs Zod", () => {
     expect(TtsInputZ.parse({ text: "hello library" }).text).toBe("hello library");
   });
 
+  it("accepts tts language es", () => {
+    expect(TtsInputZ.parse({ text: "hola biblioteca", language: "es" }).language).toBe("es");
+  });
+
   it("StockInput.source is optional; old literals parse", () => {
     const parsed = StockInputZ.parse({
       query: "night library",
