@@ -7,6 +7,7 @@ from pathlib import Path
 from claim import claim_oldest
 from comfy import process_image
 from config import Settings
+from video import process_video
 
 
 def connect(db_path: Path, pragmas: list[str]) -> sqlite3.Connection:
@@ -23,11 +24,16 @@ def run_loop(settings: Settings | None = None) -> None:
     conn = connect(Path(settings.DATA_DIR) / "studio.sqlite", list(contract["pragmas"]))
     while True:
         try:
-            job = claim_oldest(conn, contract, ["image"], settings.WORKER_OWNER, int(time.time() * 1000))
+            job = claim_oldest(
+                conn, contract, ["image", "video"], settings.WORKER_OWNER, int(time.time() * 1000)
+            )
         except Exception:
             time.sleep(1)
             continue
         if not job:
             time.sleep(1)
             continue
-        process_image(conn, contract, settings, job)
+        if str(job["module"]) == "video":
+            process_video(conn, contract, settings, job)
+        else:
+            process_image(conn, contract, settings, job)

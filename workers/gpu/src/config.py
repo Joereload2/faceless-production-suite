@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     DATA_DIR: str = "./data"
     COMFY_URL: str = "http://127.0.0.1:8188"
+    FFMPEG_BIN: str = "ffmpeg"
     CONTRACT_JSON: str = ""
     WORKER_OWNER: str = "gpu-local"
 
