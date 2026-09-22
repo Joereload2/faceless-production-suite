@@ -13,6 +13,7 @@ import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { outlierRoutes } from "./routes/outliers.js";
 import { projectRoutes } from "./routes/projects.js";
+import { publishRoutes } from "./routes/publish.js";
 
 export type AppEnv = {
   Variables: {
@@ -39,6 +40,7 @@ export function createApp(opts: { config: Config; db: DatabaseSync; repoRoot: st
   app.route("/", channelRoutes);
   app.route("/", approvalRoutes);
   app.route("/", outlierRoutes);
+  app.route("/", publishRoutes);
   app.notFound((c) => c.json(errJson("validation", "not found"), 404));
   app.onError((err, c) => {
     if (err instanceof HttpError) {

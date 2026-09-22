@@ -9,7 +9,14 @@ import { ThumbForm } from "../components/ThumbForm";
 import { POLL_MS } from "../poll";
 import styles from "../styles/app.module.css";
 
-type Project = { id: string; title: string; channel: string; bytesUsed: number };
+type Triple = { jobId: string; hash: string; at: string } | null;
+type Project = {
+  id: string;
+  title: string;
+  channel: string;
+  bytesUsed: number;
+  approvals?: { script: Triple; master: Triple; thumb: Triple };
+};
 type Outlier = { videoId: string; title: string; views: number | null; ratio: number | null };
 type SeoGap = { query: string; impressions: number; clicks: number; ctr: number; action: string };
 
@@ -40,6 +47,15 @@ export function ProjectPage() {
       </p>
       <h1>{project.data?.title ?? "Proyecto"}</h1>
       {project.data ? <p>Canal {project.data.channel} · {project.data.bytesUsed} bytes</p> : null}
+      {project.data?.approvals?.script &&
+      project.data.approvals.master &&
+      project.data.approvals.thumb ? (
+        <p>
+          <Link to={`/projects/${projectId}/publish`}>Publicar</Link>
+        </p>
+      ) : (
+        <p>Publicar (faltan aprobaciones)</p>
+      )}
       <ApprovalPanel
         projectId={projectId}
         jobs={jobs.data?.jobs ?? []}
